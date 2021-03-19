@@ -90,7 +90,7 @@ total_per_day <- group_by(repDataActClean, date)
 total_per_day <- summarize(total_per_day, TotalStepsPerDay=sum(steps))
 
 ggplot(total_per_day, aes(x=TotalStepsPerDay)) +
-    geom_histogram( fill="#69b3a2", color="#e9ecef", alpha=0.9, bins=60) +
+    geom_histogram(bins=60) +
     ggtitle("Histogram total number steps taken each day without NA") +
     theme(
       plot.title = element_text(size=15)
@@ -146,7 +146,6 @@ total_median <- median(filter(repDataActClean, steps > 0)$steps)
 Total mean = 134.2607059  
 Total median = 56
 
-
 ## 04 - Time series plot of the average number of steps taken not including activity = 0 and NA
 
 
@@ -158,12 +157,26 @@ ggplot(g2, aes(x = date, y = Mean))+
 
 ![](PA1_template_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
 
-## 05 - The 5-minute interval that, on average, contains the maximum number of steps
+## 05 - What is the average daily activity pattern?
 
 ```r
 avg_by_interval <- select(repDataActClean, interval, steps)
 avg_by_interval <- group_by(avg_by_interval, interval)
 avg_by_interval <- summarize(avg_by_interval, AvgSteps=mean(steps))
+
+g <- ggplot(avg_by_interval, aes(interval, AvgSteps))
+g+ geom_line()+
+  ggtitle("Average number of steps taken in a day (per 5' interval)")+
+  xlab("hours in a day / 5' interval")+
+  ylab("average number of steps - averaged across all days")+
+  theme(plot.title = element_text(face="bold", size=12))
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+
+## 05 - The 5-minute interval that, on average, contains the maximum number of steps
+
+```r
 avg_by_interval <- slice_head(arrange(avg_by_interval, desc(AvgSteps)),n=1)
 avg_by_interval
 ```
@@ -186,6 +199,8 @@ Total of missing values: 2304
 
 ### 06.2 - Devise a strategy for filling in all of the missing values in the dataset. Create a new dataset that is equal to the original dataset but with the missing data filled in.
 
+The strategy is to fill NA values with the total mean of steps of all the period, taking off the 0 steps recorded
+
 ```r
 total_mean <- mean(repDataActClean$steps)
 repDataActImputed <- mutate(repDataAct, steps = ifelse(is.na(steps),total_mean,steps))
@@ -203,14 +218,14 @@ total_per_day_imputed <- group_by(repDataActImputed, date)
 total_per_day_imputed <- summarize(total_per_day_imputed, TotalStepsPerDay=sum(steps))
 
 ggplot(total_per_day_imputed, aes(x=TotalStepsPerDay)) +
-    geom_histogram( fill="#69b3a2", color="#e9ecef", alpha=0.9, bins=60) +
+    geom_histogram(bins=60) +
     ggtitle("Histogram total steps taken each day after missing values are imputed") +
     theme(
       plot.title = element_text(size=15)
     )
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+![](PA1_template_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
 
 
@@ -247,7 +262,7 @@ ggplot(g2)+
         scale_color_hue(labels = c("Median"))
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+![](PA1_template_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
 
 ```r
 total_mean <- mean(filter(repDataActImputed, steps > 0)$steps)
@@ -262,13 +277,30 @@ Total median = 37.3825996
 
 
 ```r
+#creating week day type
 repDataActImputed <- mutate(repDataAct, typeOfWeekDay = ifelse(as.numeric(strftime(date, "%u")) %in% c(6,7), "weekend", "weekday"))
 repDataActImputed$typeOfWeekDay <- factor(repDataActImputed$typeOfWeekDay)
 
-g<- ggplot(repDataActImputed, aes(x=date, y=steps)) + 
+
+repDataActImputed <- select(repDataActImputed, typeOfWeekDay, interval, steps)
+repDataActImputed <- filter(repDataActImputed, !is.na(steps))
+repDataActImputed <- group_by(repDataActImputed, interval)
+repDataActImputed <- group_by(repDataActImputed, typeOfWeekDay, .add=T)
+repDataActImputed <- summarize(repDataActImputed, AvgSteps=mean(steps))
+```
+
+```
+## `summarise()` has grouped output by 'interval'. You can override using the `.groups` argument.
+```
+
+```r
+g<- ggplot(repDataActImputed, aes(x=interval, y=AvgSteps)) +
   geom_line() +
+  ggtitle("Average number of steps taken: per days of weekdays vs. weekends")+
+  xlab("hours in a day / 5' interval")+
+  ylab("averaged steps across all weekdays / weekend days") +
   facet_grid(typeOfWeekDay ~ .)
 print(g)
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+![](PA1_template_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
