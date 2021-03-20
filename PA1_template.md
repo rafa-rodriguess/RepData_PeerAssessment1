@@ -1,8 +1,5 @@
 ---
 title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
 ---
 ## 00 - Load librarys and options
 
@@ -257,7 +254,7 @@ print(g2)
 ggplot(g2)+ 
         geom_col(aes(x = date, y = Mean))  +
         geom_line(aes(x = date, y = Median, col="red")) + 
-        ggtitle("Mean / median steps taken each day not including activity = 0 after missing values are imputed") +
+        ggtitle("Mean / median steps each day not including activity = 0 and after NA are imputed") +
         theme(legend.title=element_blank()) +
         scale_color_hue(labels = c("Median"))
 ```
